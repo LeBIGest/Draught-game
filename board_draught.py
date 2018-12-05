@@ -113,6 +113,9 @@ class GameBoard(QMainWindow):
                     else:
                         painter.setPen(QPen(QBrush(color_player), 1, Qt.SolidLine, Qt.RoundCap))
                     painter.drawEllipse(posX, posY, 98, 98)
+                    if self.gameList[y][x].isKing:
+                        painter.setPen(QPen(Qt.yellow, 5, Qt.SolidLine, Qt.RoundCap))
+                        painter.drawEllipse(posX + 25, posY + 25, 50, 50)
                 posX += 100
                 painter.end()
             posY += 100
@@ -126,43 +129,31 @@ class GameBoard(QMainWindow):
             self.pointX = floor(event.x() / 100)
             self.pointY = floor(event.y() / 100)
             new_point = QPoint(self.pointY, self.pointX)
-            print("TURN CONTINUE = " + str(self.turnContinue))
+            #print("TURN CONTINUE = " + str(self.turnContinue))
             if (self.caseIsSelected and new_point in self.FuturPositionList) or self.turnContinue:
-                print("ON PASSE 1")
-                self.gameList[self.current_select[0]][self.current_select[1]].isPlayer = 0
-                self.gameList[self.current_select[0]][self.current_select[1]].isSelected = False
-                self.gameList[self.pointY][self.pointX].isPlayer = self.current_player
-                old_point = QPoint(self.current_select[0], self.current_select[1])
-                #self.find_futur_postition(self.pointX, self.pointY)
-                # self.check_if_ennemy(new_point, old_point)
+                #print("ON PASSE 1")
+                if new_point in self.FuturPositionList:
+                    self.gameList[self.current_select[0]][self.current_select[1]].isPlayer = 0
+                    self.gameList[self.current_select[0]][self.current_select[1]].isSelected = False
+                    if self.gameList[self.current_select[0]][self.current_select[1]].isKing:
+                        self.gameList[self.current_select[0]][self.current_select[1]].isKing = False
+                        self.gameList[self.pointY][self.pointX].isKing = True
+                    self.gameList[self.pointY][self.pointX].isPlayer = self.current_player
+                    if self.check_is_new_king(self.pointY):
+                        self.gameList[self.pointY][self.pointX].isKing = True
+                    old_point = QPoint(self.current_select[0], self.current_select[1])
+                    #self.find_futur_postition(self.pointX, self.pointY)
+                    # self.check_if_ennemy(new_point, old_point)
 
-                enemy_point = self.check_if_ennemy(new_point, old_point)
+                    enemy_point = self.check_if_ennemy(new_point, old_point)
 
-                """if enemy_point is not None:
-                    print(" PLAYER : " + str(self.current_player))
-                    print(str(enemy_point.x()))
-                    print(str(enemy_point.y()))"""
+                    """if enemy_point is not None:
+                        print(" PLAYER : " + str(self.current_player))
+                        print(str(enemy_point.x()))
+                        print(str(enemy_point.y()))"""
 
-                if enemy_point is None:
-                    print("ON PASSE LE TOUR")
-                    if self.current_player == 1:
-                        self.current_player = 2
-                    else:
-                        self.current_player = 1
-                    self.clear_selectable()
-                    self.caseIsSelected = False
-                    self.turnContinue = False
-                    print("repasse à false 2")
-                    print(str(self.current_player))
-                else:
-                    print("ON CONTINUE")
-                    self.gameList[enemy_point.x()][enemy_point.y()].isPlayer = 0
-                    """enemy_point = self.check_if_ennemy(new_point, old_point)
-                    if enemy_point is None:"""
-                    if self.check_enemy_position(self.current_player, self.pointX, self.pointY) is True:
-                        print("turn continue passe à true")
-                        self.turnContinue = True
-                    else:
+                    if enemy_point is None:
+                        #print("ON PASSE LE TOUR")
                         if self.current_player == 1:
                             self.current_player = 2
                         else:
@@ -170,7 +161,27 @@ class GameBoard(QMainWindow):
                         self.clear_selectable()
                         self.caseIsSelected = False
                         self.turnContinue = False
+                        #print("repasse à false 2")
+                        #print(str(self.current_player))
+                    else:
+                        #print("ON CONTINUE")
+                        self.gameList[enemy_point.x()][enemy_point.y()].isPlayer = 0
+                        """enemy_point = self.check_if_ennemy(new_point, old_point)
+                        if enemy_point is None:"""
+                        if self.check_enemy_position(self.current_player, self.pointX, self.pointY) is True:
+                            print("turn continue passe à true")
+                            self.turnContinue = True
+                        else:
+                            if self.current_player == 1:
+                                self.current_player = 2
+                            else:
+                                self.current_player = 1
+                            self.clear_selectable()
+                            self.caseIsSelected = False
+                            self.turnContinue = False
 
+                else:
+                    return
 
             if self.gameList[self.pointY][self.pointX].get_player() == self.current_player:
                 self.caseIsSelected = True
@@ -193,7 +204,7 @@ class GameBoard(QMainWindow):
                         self.current_player = 1
                     self.clear_selectable()
                     self.caseIsSelected = False
-                    print("repasse à false 1")
+                    #print("repasse à false 1")
                     self.turnContinue = False
 
 
@@ -206,21 +217,38 @@ class GameBoard(QMainWindow):
             self.check_position(i, x, y, self.FuturPositionList, tmp_player)
 
     def check_position(self, i, x, y, futur_position, tmp_player):
-        if i == 0:
-            x -= 1
-            y -= 1
-        elif i == 1:
-            x += 1
-            y -= 1
-        elif i == 2:
-            x -= 1
-            y += 1
-        elif i == 3:
-            x += 1
-            y += 1
+        tmp_x = x
+        tmp_y = y
+        print("CHECK POSITION")
+        if self.gameList[y][x].isKing:
+            if i == 0:
+                x -= 1
+                y -= 1
+            if i == 1:
+                x += 1
+                y -= 1
+            if i == 2:
+                x -= 1
+                y += 1
+            if i == 3:
+                x += 1
+                y += 1
+        else:
+            if i == 0:
+                x -= 1
+                y -= 1
+            elif i == 1:
+                x += 1
+                y -= 1
+            elif i == 2:
+                x -= 1
+                y += 1
+            elif i == 3:
+                x += 1
+                y += 1
         if x in range(0, 8) and y in range(0, 8):
             if self.gameList[y][x].isPlayer != tmp_player:
-                if tmp_player == 1 and i > 1 or tmp_player == 2 and i <= 1:
+                if (tmp_player == 1 and i > 1 or tmp_player == 2 and i <= 1) or self.gameList[tmp_y][tmp_x].isKing:
                     if self.gameList[y][x] and self.gameList[y][x].isPlayer == 0:
                         #print("i = " + str(i))
                         #print("player = " + str(self.gameList[y][x].isPlayer))
@@ -274,29 +302,55 @@ class GameBoard(QMainWindow):
     def check_enemy_position(self, player, x, y): #list_pos avant
         tmp_x = x
         tmp_y = y
-        if player == 1:
+        if self.gameList[y][x].isKing:
+            print("CHECK ENEMY POSITION FOR KING")
             x -= 1
             y += 1
             if x in range(0, 8) and y in range(0, 8):
                 if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
                     if self.check_futur_empty_position(0, x, y):
                         return True
-                else:
-                    x = tmp_x + 1
-                    y = tmp_y + 1
-                    if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
-                        if self.check_futur_empty_position(1, x, y):
-                            return True
-        if player == 2:
+            x = tmp_x + 1
+            y = tmp_y + 1
+            if x in range(0, 8) and y in range(0, 8):
+                if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
+                    if self.check_futur_empty_position(1, x, y):
+                        return True
+            x = tmp_x - 1
+            y = tmp_y - 1
+            if x in range(0, 8) and y in range(0, 8):
+                if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
+                    if self.check_futur_empty_position(2, x, y):
+                        return True
+            x = tmp_x + 1
+            y = tmp_y - 1
+            if x in range(0, 8) and y in range(0, 8):
+                if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
+                    if self.check_futur_empty_position(3, x, y):
+                        return True
+        elif player == 1:
+            x -= 1
+            y += 1
+            if x in range(0, 8) and y in range(0, 8):
+                if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
+                    if self.check_futur_empty_position(0, x, y):
+                        return True
+            x = tmp_x + 1
+            y = tmp_y + 1
+            if x in range(0, 8) and y in range(0, 8):
+                if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
+                    if self.check_futur_empty_position(1, x, y):
+                        return True
+        elif player == 2:
             x -= 1
             y -= 1
             if x in range(0, 8) and y in range(0, 8):
                 if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
                     if self.check_futur_empty_position(2, x, y):
                         return True
-                else:
-                    x = tmp_x + 1
-                    y = tmp_y - 1
+            x = tmp_x + 1
+            y = tmp_y - 1
+            if x in range(0, 8) and y in range(0, 8):
                     if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
                         if self.check_futur_empty_position(3, x, y):
                             return True
@@ -371,6 +425,13 @@ class GameBoard(QMainWindow):
             #augmenter le score du current player
         else:
             return None
+
+    def check_is_new_king(self, y):
+        if self.current_player == 1 and y == 7:
+            return True
+        elif self.current_player == 2 and y == 0:
+            return True
+        return False
 
 
 if __name__ == '__main__':
