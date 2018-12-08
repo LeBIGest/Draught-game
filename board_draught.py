@@ -25,18 +25,6 @@ class CaseGame(QMainWindow):
     def set_isSelected(self):
         self.isSelected = not self.isSelected
 
-    def get_player(self):
-        return self.isPlayer
-
-    def print_pos(self):
-        print(str(self.posY) + " " + str(self.posX))
-
-    def get_pos_x(self):
-        return self.posX
-
-    def get_pos_y(self):
-        return self.posY
-
     def get_color(self):
         if self.isSelectable is True:
             return Qt.magenta
@@ -80,11 +68,7 @@ class GameBoard(QMainWindow):
                 elif y in range(5, 8) and color:
                     self.case.isPlayer = 2
                 self.caseList.append(self.case)
-                # self.case.print_pos()
-                # print(str(self.case.get_player()))
-                # self.case.get_color()
             self.gameList.append(self.caseList)
-        # print(self.gameList)
 
     # print our board
     def paintEvent(self, event):
@@ -102,18 +86,18 @@ class GameBoard(QMainWindow):
                 rect = QRect(posX, posY, 100, 100)
                 painter.drawRect(rect)
                 painter.fillRect(rect, brush)
-                if self.gameList[y][x].get_player() != 0:
-                    if self.gameList[y][x].get_player() == 1:
+                if self.gameList[y][x].isPlayer != 0: #if there is something on the case
+                    if self.gameList[y][x].isPlayer == 1: #if it's the first team we choose blue
                         color_player = Qt.blue
-                    else:
+                    else: #else we choose red for the second team
                         color_player = Qt.red
                     painter.setBrush(QBrush(color_player))
-                    if self.gameList[y][x].isSelected:
+                    if self.gameList[y][x].isSelected: #if the pawn is selected we draw a green circle around it
                         painter.setPen(QPen(QBrush(Qt.green), 3, Qt.SolidLine, Qt.RoundCap))
                     else:
                         painter.setPen(QPen(QBrush(color_player), 1, Qt.SolidLine, Qt.RoundCap))
                     painter.drawEllipse(posX, posY, 98, 98)
-                    if self.gameList[y][x].isKing:
+                    if self.gameList[y][x].isKing: #if it's a king we draw a yellow "crown" on it
                         painter.setPen(QPen(Qt.yellow, 5, Qt.SolidLine, Qt.RoundCap))
                         painter.drawEllipse(posX + 25, posY + 25, 50, 50)
                 posX += 100
@@ -128,32 +112,22 @@ class GameBoard(QMainWindow):
             self.point = event.pos()
             self.pointX = floor(event.x() / 100)
             self.pointY = floor(event.y() / 100)
-            new_point = QPoint(self.pointY, self.pointX)
-            #print("TURN CONTINUE = " + str(self.turnContinue))
-            if (self.caseIsSelected and new_point in self.FuturPositionList) or self.turnContinue:
-                #print("ON PASSE 1")
-                if new_point in self.FuturPositionList:
+            new_point = QPoint(self.pointY, self.pointX) #get the point where we clicked
+            if (self.caseIsSelected and new_point in self.FuturPositionList) or self.turnContinue: #if it's a potential position of the selected pawn
+                if new_point in self.FuturPositionList: #if it's a new valid position we change our pawn for his new position
                     self.gameList[self.current_select[0]][self.current_select[1]].isPlayer = 0
                     self.gameList[self.current_select[0]][self.current_select[1]].isSelected = False
                     if self.gameList[self.current_select[0]][self.current_select[1]].isKing:
                         self.gameList[self.current_select[0]][self.current_select[1]].isKing = False
                         self.gameList[self.pointY][self.pointX].isKing = True
                     self.gameList[self.pointY][self.pointX].isPlayer = self.current_player
-                    if self.check_is_new_king(self.pointY):
+                    if self.check_is_new_king(self.pointY): #we check if the new position of our pawn transform it to a king
                         self.gameList[self.pointY][self.pointX].isKing = True
                     old_point = QPoint(self.current_select[0], self.current_select[1])
-                    #self.find_futur_postition(self.pointX, self.pointY)
-                    # self.check_if_ennemy(new_point, old_point)
 
-                    enemy_point = self.check_if_ennemy(new_point, old_point)
+                    enemy_point = self.check_if_ennemy(new_point, old_point) #we check if we eat an enemy or not
 
-                    """if enemy_point is not None:
-                        print(" PLAYER : " + str(self.current_player))
-                        print(str(enemy_point.x()))
-                        print(str(enemy_point.y()))"""
-
-                    if enemy_point is None:
-                        #print("ON PASSE LE TOUR")
+                    if enemy_point is None: #if we don't eat anybody the turn ended
                         if self.current_player == 1:
                             self.current_player = 2
                         else:
@@ -161,15 +135,9 @@ class GameBoard(QMainWindow):
                         self.clear_selectable()
                         self.caseIsSelected = False
                         self.turnContinue = False
-                        #print("repasse à false 2")
-                        #print(str(self.current_player))
-                    else:
-                        #print("ON CONTINUE")
+                    else: # else we recheck if our new position give us the possibility of eating another enemy
                         self.gameList[enemy_point.x()][enemy_point.y()].isPlayer = 0
-                        """enemy_point = self.check_if_ennemy(new_point, old_point)
-                        if enemy_point is None:"""
                         if self.check_enemy_position(self.current_player, self.pointX, self.pointY) is True:
-                            print("turn continue passe à true")
                             self.turnContinue = True
                         else:
                             if self.current_player == 1:
@@ -182,8 +150,8 @@ class GameBoard(QMainWindow):
 
                 else:
                     return
-
-            if self.gameList[self.pointY][self.pointX].get_player() == self.current_player:
+            #this part is to select a new pawn and find what is possible to do with it
+            if self.gameList[self.pointY][self.pointX].isPlayer == self.current_player:
                 self.caseIsSelected = True
                 if self.current_select:
                     self.gameList[self.current_select[0]][self.current_select[1]].isSelected = False
@@ -204,22 +172,19 @@ class GameBoard(QMainWindow):
                         self.current_player = 1
                     self.clear_selectable()
                     self.caseIsSelected = False
-                    #print("repasse à false 1")
                     self.turnContinue = False
 
-
+    #used to find our futur potential positions and enemies
     def find_futur_postition(self, x, y):
         self.FuturPositionList = []
-        self.FuturPositionToAttack = []
-        self.PositionOfEnnemies = []
         tmp_player = self.gameList[y][x].isPlayer
         for i in range(0, 4):
             self.check_position(i, x, y, self.FuturPositionList, tmp_player)
 
+    #used to check cases around the selected pawn
     def check_position(self, i, x, y, futur_position, tmp_player):
         tmp_x = x
         tmp_y = y
-        print("CHECK POSITION")
         if self.gameList[y][x].isKing:
             if i == 0:
                 x -= 1
@@ -250,18 +215,15 @@ class GameBoard(QMainWindow):
             if self.gameList[y][x].isPlayer != tmp_player:
                 if (tmp_player == 1 and i > 1 or tmp_player == 2 and i <= 1) or self.gameList[tmp_y][tmp_x].isKing:
                     if self.gameList[y][x] and self.gameList[y][x].isPlayer == 0:
-                        #print("i = " + str(i))
-                        #print("player = " + str(self.gameList[y][x].isPlayer))
                         new_pos = QPoint(y, x)
-                        # print("NOUVELLE POSITION Y = " + str(y) + " X = " + str(x))
                         self.gameList[y][x].isSelectable = True
                         futur_position.append(new_pos)
                     elif self.gameList[y][x].isPlayer != 0:
                         ennemie_pos = QPoint(y, x)
                         list_pos = []
                         self.check_empty_position(i, x, y, ennemie_pos, list_pos)
-                        self.print_position_enemy()
 
+    # when we find an enemy around of our pawn we check if there is an empty case to eat it
     def check_empty_position(self, i, x, y, ennemie_pos, list_pos):
         if i == 0:
             x -= 1
@@ -281,29 +243,19 @@ class GameBoard(QMainWindow):
             i = 0
         if x in range(0, 8) and y in range(0, 8):
             if self.gameList[y][x].isPlayer == 0:
-                print("Find empty case Y: " + str(y) + " X:" + str(x))
                 self.gameList[y][x].isSelectable = True
                 if list_pos:
                     list_pos[0] = QPoint(y, x)
                 else:
                     list_pos.append(QPoint(y, x))
-                    print("first")
                 self.FuturPositionList.append(QPoint(y, x))
                 list_pos.append(ennemie_pos)
-                self.PositionOfEnnemies.append(
-                    list_pos)  # list_pos contient en [0] notre futur position et les Qpoints les ennemis à effacer
-                """for new_i in range(0, 4):
-                    if new_i != i:
-                        test = list_pos
-                        self.check_enemy_position(new_i, x, y, test) # va chercher de potentiels ennemies à partir de notre nouvelle "empty case"
-                """
 
-
-    def check_enemy_position(self, player, x, y): #list_pos avant
+    #used when we just eat an enemy and the turn continue, we check here if there is again an enemy to eat around our new position
+    def check_enemy_position(self, player, x, y):
         tmp_x = x
         tmp_y = y
         if self.gameList[y][x].isKing:
-            print("CHECK ENEMY POSITION FOR KING")
             x -= 1
             y += 1
             if x in range(0, 8) and y in range(0, 8):
@@ -356,6 +308,7 @@ class GameBoard(QMainWindow):
                             return True
         return False
 
+    # if check_enemy_position find an enemy we check here if we can eat it
     def check_futur_empty_position(self, i, x, y):
         if i == 0:
             x -= 1
@@ -374,32 +327,22 @@ class GameBoard(QMainWindow):
                 return True
         return False
 
-    def print_position_enemy(self):
-        #print("TEST " + str(len(self.PositionOfEnnemies)))
-        for y in range(0, len(self.PositionOfEnnemies)):
-            self.FuturPositionList.append(self.PositionOfEnnemies[y][0])
-            self.FuturPositionToAttack.append(self.PositionOfEnnemies[y][0])
-            #print("Position finale: " + str(self.PositionOfEnnemies[y][0].x()) + " " + str(
-                #self.PositionOfEnnemies[y][0].y()))
-            #for x in range(1, len(self.PositionOfEnnemies[y])):
-                #print("Pion attrapé(s) en: " + str(self.PositionOfEnnemies[y][x].x()) + " " + str(
-                #self.PositionOfEnnemies[y][x].y()))
-
+    #clear all selectable cases
     def clear_selectable(self):
         for i in range(0, len(self.FuturPositionList)):
             y = self.FuturPositionList[i].x()
             x = self.FuturPositionList[i].y()
             self.gameList[y][x].isSelectable = False
 
+    #check if there are cases which are selectable
     def check_selectable(self):
-        print("CHECK IS SELECTABLE")
         for y in range(0, 8):
             for x in range(0, 8):
                 if self.gameList[y][x].isSelectable:
                     return True
-        print("RETURN FALSE")
         return False
 
+    #if we pass through an enemy during our deplacement we eat it
     def check_if_ennemy(self, new_point, old_point):
         x = new_point.y()
         y = new_point.x()
@@ -417,15 +360,13 @@ class GameBoard(QMainWindow):
         elif old_y < y and old_x > x:
             y -= 1
             x += 1
-        #print("WHICH PLAYER" + str(self.gameList[y][x].isPlayer))
-        #print("CURRENT PLAYER" + str(self.current_player))
         if self.gameList[y][x].isPlayer != 0 and self.gameList[y][x].isPlayer != self.current_player:
-            print("IN CHECK ENEMY POINT EXISTED")
             return QPoint(y, x)
             #augmenter le score du current player
         else:
             return None
 
+    #check if the new position of our selected pawn transform it to a king
     def check_is_new_king(self, y):
         if self.current_player == 1 and y == 7:
             return True
