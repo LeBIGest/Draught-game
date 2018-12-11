@@ -2,11 +2,18 @@
 import time
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QVBoxLayout, QHBoxLayout, \
-    QToolBar, QWidget, QDialog, QMessageBox, QAction
+    QToolBar, QWidget, QDialog, QMessageBox, QAction, QListWidget, QStackedWidget, QCheckBox
 from PyQt5.QtCore import Qt, QRect, QPoint, QTimer
-from PyQt5.QtGui import QPainter, QPixmap, QBrush, QPen, QImage, QIcon
+from PyQt5.QtGui import QPainter, QPixmap, QBrush, QPen, QImage, QIcon, QColor
 from math import *
 import sys
+
+
+g_color_player_one = QColor(0, 92, 232)
+g_color_player_two = QColor(12, 151, 8)
+g_color_king = QColor(255, 216, 0)
+g_color_selected = QColor(0, 255, 102)
+g_color_selectable_case = QColor(255, 98, 164)
 
 
 class Player:
@@ -72,18 +79,18 @@ class GameOptionPlayer:
         self.header = QHBoxLayout()
 
         self.icon = QLabel()
-        picture = QPixmap(50, 50)
-        picture.fill(Qt.white)
-        paint = QPainter(picture)
-        paint.setBrush(QBrush(color))
-        paint.setPen(QPen(QBrush(color), 3, Qt.SolidLine, Qt.RoundCap))
-        paint.drawEllipse(2, 2, 46, 46)
-        self.icon.setPixmap(picture)
+        self.picture = QPixmap(50, 50)
+        self.picture.fill(Qt.white)
+        self.paint = QPainter(self.picture)
+        self.paint.setBrush(QBrush(color))
+        self.paint.setPen(QPen(QBrush(color), 3, Qt.SolidLine, Qt.RoundCap))
+        self.paint.drawEllipse(2, 2, 46, 46)
+        self.icon.setPixmap(self.picture)
 
         self.header.addWidget(self.icon)
         self.header.addLayout(self.title)
 
-        paint.end()
+        self.paint.end()
 
         self.score = QLabel("Score: " + str(self.player.score))
         self.jumps = QLabel("Jumps: " + str(self.player.jumps))
@@ -104,7 +111,13 @@ class GameOptionPlayer:
         else:
             self.time_passed.setText("Time left : {:02d}:{:02d}".format(min, sec))
 
-    def update_player(self, player):
+    def update_player(self, player, new_color):
+        self.paint = QPainter(self.picture)
+        self.paint.setBrush(QBrush(new_color))
+        self.paint.setPen(QPen(QBrush(new_color), 3, Qt.SolidLine, Qt.RoundCap))
+        self.paint.drawEllipse(2, 2, 46, 46)
+        self.icon.setPixmap(self.picture)
+        self.paint.end()
         self.score.setText("Score: " + str(player.score))
         self.jumps.setText("Jumps: " + str(player.jumps))
 
@@ -113,6 +126,8 @@ class GameOptions:
     def __init__(self):
 
         global g_game
+        global g_color_player_one
+        global g_color_player_two
 
         self.game = g_game
 
@@ -122,16 +137,43 @@ class GameOptions:
         self.player1_part = QWidget()
         self.player2_part = QWidget()
 
-        self.player1 = GameOptionPlayer(self.game.players[0], Qt.blue)
+        self.player1 = GameOptionPlayer(self.game.players[0], g_color_player_one)
         self.player1_part.setLayout(self.player1.layout)
 
-        self.player2 = GameOptionPlayer(self.game.players[1], Qt.red)
+        self.player2 = GameOptionPlayer(self.game.players[1], g_color_player_two)
         self.player2_part.setLayout(self.player2.layout)
         # player2_part.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         self.tool_bar.addWidget(self.player1_part)
         self.tool_bar.addSeparator()
         self.tool_bar.addWidget(self.player2_part)
+        self.tool_bar.addSeparator()
+        checkBox_color = QCheckBox("Color blindness Mode")
+        checkBox_color.setChecked(True)
+        checkBox_color.stateChanged.connect(self.change_color_mode)
+
+        self.tool_bar.addWidget(checkBox_color)
+
+    def change_color_mode(self, state):
+
+        global g_color_player_one
+        global g_color_player_two
+        global g_color_king
+        global g_color_selected
+        global g_color_selectable_case
+
+        if state == Qt.Checked:
+            g_color_player_one = QColor(0, 92, 232)
+            g_color_player_two = QColor(12, 151, 8)
+            g_color_king = QColor(255, 216, 0)
+            g_color_selected = QColor(0, 255, 102)
+            g_color_selectable_case = QColor(255, 98, 164)
+        else:
+            g_color_player_one = Qt.blue
+            g_color_player_two = Qt.red
+            g_color_king = Qt.yellow
+            g_color_selected = Qt.green
+            g_color_selectable_case = Qt.magenta
 
     def update_current_player(self, current_id):
         if current_id == 2:
@@ -142,10 +184,36 @@ class GameOptions:
             self.player2_part.setStyleSheet("background-color: #FFFFFF")
 
     def update(self):
-        self.player1.update_player(self.game.players[0])
-        self.player2.update_player(self.game.players[1])
+        self.player1.update_player(self.game.players[0], g_color_player_one)
+        self.player2.update_player(self.game.players[1], g_color_player_two)
 
-        # player2_part.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+       # player2_part.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+
+class HowToPlayFragment:
+    def __init__(self, title, desc, icon_path):
+        self.widget = QWidget()
+
+        layout = QVBoxLayout()
+        self.logo = QLabel()
+        self.picture = QPixmap(icon_path)
+        self.logo.setPixmap(self.picture.scaled(400, 400))
+        self.title = QLabel(title)
+        font = self.title.font()
+        font.setPointSize(20)
+        font.setBold(True)
+        self.title.setFont(font)
+
+        self.description = QLabel(desc)
+
+        layout.addWidget(self.title)
+        layout.addSpacing(5)
+        if icon_path is not "":
+            layout.addWidget(self.logo)
+            layout.addSpacing(5)
+        layout.addWidget(self.description)
+
+        self.widget.setLayout(layout)
 
 
 class HowToPlay(QDialog):
@@ -154,7 +222,49 @@ class HowToPlay(QDialog):
 
         self.setWindowTitle("How to play ?")
 
+        self.left_list = QListWidget()
+        self.left_list.setMinimumWidth(200)
+        self.left_list.insertItems(0, ["Presentation & Goal", "Selection", "Movement", "Capture", "King", "Win condition"])
+
+        self.rules_part = HowToPlayFragment("Presentation & Goal", "Draught game is a two players game. \nThe goal is to capture all pieces of your openent",
+                                            "")
+
+        self.selection_part = HowToPlayFragment("Selection",
+                                            "The player can select one piece when he clickes on it. One piece can be selected at the time.\nThe game will show him all possibilities he can do.",
+                                                "./img/selection.png")
+
+        self.movement_part = HowToPlayFragment("Movement",
+                                               "When a piece is selected (i.e selection part) the player can select between all possibilities (colored cases)\nand select one to place the piece on this case.",
+                                               "./img/movement.png")
+
+        self.capture_part = HowToPlayFragment("Capture",
+                                               "When the piece is diagonally in front of an oponent one, the player can capture it.\nTo do this, the player can just click on the colored square behind the piece\nHe will score and if he can capture a piece again, his turn contnues and he can capture another piece.",
+                                               "./img/movement.png")
+
+        self.king_part = HowToPlayFragment("King",
+                                              "A piece can be a King when it reach the oponent board side.\nThis piece is very important because he can move and capture behind him.",
+                                              "./img/king.png")
+
+        self.stack = QStackedWidget(self)
+        self.stack.addWidget(self.rules_part.widget)
+        self.stack.addWidget(self.selection_part.widget)
+        self.stack.addWidget(self.movement_part.widget)
+        self.stack.addWidget(self.capture_part.widget)
+        self.stack.addWidget(self.king_part.widget)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.left_list)
+        layout.addWidget(self.stack)
+
+        self.setLayout(layout)
+        self.left_list.currentRowChanged.connect(self.display)
+
+        self.setGeometry(800, 100, 500, 200)
+
         self.show()
+
+    def display(self, i):
+        self.stack.setCurrentIndex(i)
 
 
 # represent a case object
@@ -176,7 +286,7 @@ class CaseGame:
 
     def get_color(self):
         if self.isSelectable is True:
-            return Qt.magenta
+            return g_color_selectable_case
         elif self.color is True:
             return Qt.black
         else:
@@ -187,6 +297,13 @@ class CaseGame:
 class GameBoard(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        global g_color_player_one
+        global g_color_player_two
+        global g_color_king
+        global g_color_selected
+        global g_color_selectable_case
+
 
         self.init_game_array()
         self.resize(1005, 820)
@@ -328,17 +445,17 @@ class GameBoard(QMainWindow):
                 painter.fillRect(rect, brush)
                 if self.gameList[y][x].isPlayer != 0:  # if there is something on the case
                     if self.gameList[y][x].isPlayer == 1:  # if it's the first team we choose blue
-                        color_player = Qt.blue
+                        color_player = g_color_player_one
                     else:  # else we choose red for the second team
-                        color_player = Qt.red
+                        color_player = g_color_player_two
                     painter.setBrush(QBrush(color_player))
                     if self.gameList[y][x].isSelected:  # if the pawn is selected we draw a green circle around it
-                        painter.setPen(QPen(QBrush(Qt.green), 3, Qt.SolidLine, Qt.RoundCap))
+                        painter.setPen(QPen(QBrush(g_color_selected), 3, Qt.SolidLine, Qt.RoundCap))
                     else:
                         painter.setPen(QPen(QBrush(color_player), 1, Qt.SolidLine, Qt.RoundCap))
                     painter.drawEllipse(posX, posY, 98, 98)
                     if self.gameList[y][x].isKing:  # if it's a king we draw a yellow "crown" on it
-                        painter.setPen(QPen(Qt.yellow, 5, Qt.SolidLine, Qt.RoundCap))
+                        painter.setPen(QPen(g_color_king, 5, Qt.SolidLine, Qt.RoundCap))
                         painter.drawEllipse(posX + 25, posY + 25, 50, 50)
                 posX += 100
                 painter.end()
@@ -483,19 +600,15 @@ class GameBoard(QMainWindow):
         if i == 0:
             x -= 1
             y -= 1
-            i = 3
         elif i == 1:
             x += 1
             y -= 1
-            i = 2
         elif i == 2:
             x -= 1
             y += 1
-            i = 1
         elif i == 3:
             x += 1
             y += 1
-            i = 0
         if x in range(0, 8) and y in range(0, 8):
             if self.gameList[y][x].isPlayer == 0:
                 self.gameList[y][x].isSelectable = True
