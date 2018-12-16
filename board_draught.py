@@ -27,7 +27,6 @@ g_color_selected = QColor(0, 255, 102)
 g_color_selectable_case = QColor(255, 98, 164)
 
 
-
 # Class linked to the player in the logical side
 class Player:
 
@@ -67,7 +66,7 @@ class Game:
             return 0
 
     # Reset the game, set both scores to 0 and timers to 5 minutes (300 seconds + 1 second of delay)
-    # And set the cuurent player to the player 1
+    # And set the current player to the player 1
     def reset(self):
         for player in self.players:
             player.score = 0
@@ -230,7 +229,7 @@ class GameOptions:
         global g_color_selected
         global g_color_selectable_case
 
-        # If the checkbow is checked, go to color blind mode
+        # If the checkbox is checked, go to color blind mode
         if state == Qt.Checked:
             g_color_player_one = QColor(0, 92, 232)
             g_color_player_two = QColor(12, 151, 8)
@@ -320,15 +319,15 @@ class HowToPlay(QDialog):
                                             "")
 
         self.selection_part = HowToPlayFragment("Selection",
-                                            "The player can select one piece when he clickes on it. One piece can be selected at the time.\nThe game will show him all possibilities he can do.",
+                                            "The player can select one piece when he clicks on it. One piece can be selected at the time.\nThe game will show him all possibilities he can do.",
                                                 "./img/selection.png")
 
         self.movement_part = HowToPlayFragment("Movement",
-                                               "When a piece is selected (i.e selection part) the player can select between all possibilities (colored cases)\nand select one to place the piece on this case.\n Pieces can move forward by a single diagonal square",
+                                               "When a piece is selected (i.e selection part) the player can select between all possibilities (colored cases)\nand select one to place the piece on this case.\nPieces can move forward by a single diagonal square",
                                                "./img/movement.png")
 
         self.capture_part = HowToPlayFragment("Capture",
-                                               "When the piece is diagonally in front of an oponent one, the player can capture it.\nTo do this, the player can just click on the colored square behind the piece\nHe will score and if he can capture a piece again, his turn contnues and he can capture another piece.",
+                                               "When the piece is diagonally in front of an oponent, the player can capture it.\nTo do this, the player can just click on the colored square behind the piece\nHe will score and if he can capture a piece again, his turn continues and he can capture another piece.",
                                                "./img/capture.png")
 
         self.king_part = HowToPlayFragment("King",
@@ -678,7 +677,7 @@ class GameBoard(QMainWindow):
                         self.gameList[enemy_point.x()][enemy_point.y()].isPlayer = 0
                         self.gameList[enemy_point.x()][enemy_point.y()].isKing = False
 
-                        # We pdate the score of the current player and remaining pieces of the other one
+                        # We update the score of the current player and remaining pieces of the other one
                         self.game.current_player.score += 1
                         if self.game.current_player.id == 1:
                             self.game.players[1].remaining_pieces -= 1
@@ -737,7 +736,6 @@ class GameBoard(QMainWindow):
             if ret == QMessageBox.Close:
                 self.close()
             if ret == QMessageBox.Retry:
-                print(self.current_player)
                 self.game_options.update_current_player(self.current_player)
                 self.init_game_array()
                 self.game.reset()
@@ -749,7 +747,7 @@ class GameBoard(QMainWindow):
     def closeEvent(self, event):
         QApplication.closeAllWindows()
 
-    # used to find our futur potential positions and enemies
+    # used to find our future potential positions and enemies
     def find_futur_postition(self, x, y):
         self.FuturPositionList = []
         tmp_player = self.gameList[y][x].isPlayer
@@ -914,7 +912,7 @@ class GameBoard(QMainWindow):
                     return True
         return False
 
-    # if we pass through an enemy during our deplacement we capture it
+    # if we pass through an enemy during our movement we capture it
     def check_if_ennemy(self, new_point, old_point):
         x = new_point.y()
         y = new_point.x()
